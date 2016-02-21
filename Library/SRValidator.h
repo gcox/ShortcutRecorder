@@ -24,7 +24,7 @@
  */
 @interface SRValidator : NSObject
 
-@property (assign) NSObject<SRValidatorDelegate> *delegate;
+@property (weak) NSObject<SRValidatorDelegate> *delegate;
 
 - (instancetype)initWithDelegate:(NSObject<SRValidatorDelegate> *)aDelegate;
 

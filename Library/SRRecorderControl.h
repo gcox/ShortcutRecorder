@@ -78,7 +78,7 @@ IB_DESIGNABLE
     @discussion A recorder control delegate responds to editing-related messages. You can use to to prevent editing
                 in some cases or to validate typed shortcuts.
  */
-@property (assign) IBOutlet NSObject<SRRecorderControlDelegate> *delegate;
+@property (weak) IBOutlet NSObject<SRRecorderControlDelegate> *delegate;
 
 /*!
     Returns an integer bit field indicating allowed modifier flags.

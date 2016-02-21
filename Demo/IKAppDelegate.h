@@ -11,11 +11,11 @@
 
 @interface IKAppDelegate : NSObject <NSApplicationDelegate>
 
-@property (assign) IBOutlet NSWindow *window;
+@property (weak) IBOutlet NSWindow *window;
 
-@property (assign) IBOutlet NSButton *pingButton;
+@property (weak) IBOutlet NSButton *pingButton;
 
-@property (assign) IBOutlet NSMenuItem *pingItem;
+@property (weak) IBOutlet NSMenuItem *pingItem;
 
 - (IBAction)showIBAutoLayout:(id)aSender;
 
