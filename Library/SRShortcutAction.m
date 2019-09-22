@@ -18,6 +18,7 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
 {
     SRShortcut *_shortcut;
     SRShortcutActionHandler _actionHandler;
+    SRShortcutActionHandler _actionHandlerKeyUp;
     __weak id _target;
 }
 
@@ -35,11 +36,35 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
 }
 
 + (instancetype)shortcutActionWithShortcut:(SRShortcut *)aShortcut
+                                    target:(id)aTarget
+                                    action:(SEL)anAction
+                               actionKeyUp:(SEL)anActionKeyUp
+                                       tag:(NSInteger)aTag
+{
+    SRShortcutAction *action = [self shortcutActionWithShortcut:aShortcut
+                                                  target:aTarget
+                                                         action:anAction
+                                                            tag:aTag];
+    action.actionKeyUp = anActionKeyUp;
+    return action;
+}
+
++ (instancetype)shortcutActionWithShortcut:(SRShortcut *)aShortcut
                              actionHandler:(SRShortcutActionHandler)anActionHandler
 {
     SRShortcutAction *action = [self new];
     action.shortcut = aShortcut;
     action.actionHandler = anActionHandler;
+    return action;
+}
+
++ (instancetype)shortcutActionWithShortcut:(SRShortcut *)aShortcut
+                             actionHandler:(SRShortcutActionHandler)anActionHandler
+                        actionHandlerKeyUp:(SRShortcutActionHandler)anActionHandlerKeyUp
+{
+    SRShortcutAction *action = [self shortcutActionWithShortcut:aShortcut
+                                                  actionHandler:anActionHandler];
+    action.actionHandlerKeyUp = anActionHandlerKeyUp;
     return action;
 }
 
@@ -59,11 +84,39 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
 
 + (instancetype)shortcutActionWithKeyPath:(NSString *)aKeyPath
                                  ofObject:(id)anObject
+                                   target:(id)aTarget
+                                   action:(nullable SEL)anAction
+                              actionKeyUp:(nullable SEL)anActionKeyUp
+                                      tag:(NSInteger)aTag
+{
+    SRShortcutAction *action = [self shortcutActionWithKeyPath:aKeyPath
+                                                      ofObject:anObject
+                                                        target:aTarget
+                                                        action:anAction
+                                                           tag:aTag];
+    action.actionKeyUp = anActionKeyUp;
+    return action;
+}
+
++ (instancetype)shortcutActionWithKeyPath:(NSString *)aKeyPath
+                                 ofObject:(id)anObject
                             actionHandler:(SRShortcutActionHandler)anActionHandler
 {
     SRShortcutAction *action = [self new];
     [action setObservedObject:anObject withKeyPath:aKeyPath];
     action.actionHandler = anActionHandler;
+    return action;
+}
+
++ (instancetype)shortcutActionWithKeyPath:(NSString *)aKeyPath
+                                 ofObject:(id)anObject
+                            actionHandler:(SRShortcutActionHandler)anActionHandler
+                       actionHandlerKeyUp:(SRShortcutActionHandler)anActionHandlerKeyUp
+{
+    SRShortcutAction *action = [self shortcutActionWithKeyPath:aKeyPath
+                                                      ofObject:anObject
+                                                 actionHandler:anActionHandler];
+    action.actionHandlerKeyUp = anActionHandlerKeyUp;
     return action;
 }
 
@@ -184,6 +237,32 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
     }
 }
 
+- (SRShortcutActionHandler)actionHandlerKeyUp
+{
+    @synchronized (self)
+    {
+        return _actionHandlerKeyUp;
+    }
+}
+
+- (void)setActionHandlerKeyUp:(SRShortcutActionHandler)newActionHandler
+{
+    @synchronized (self)
+    {
+        [self willChangeValueForKey:@"actionHandlerKeyUp"];
+        _actionHandlerKeyUp = newActionHandler;
+
+        if (_actionHandlerKeyUp && _target)
+        {
+            [self willChangeValueForKey:@"target"];
+            _target = nil;
+            [self didChangeValueForKey:@"target"];
+        }
+
+        [self didChangeValueForKey:@"actionHandlerKeyUp"];
+    }
+}
+
 - (id)target
 {
     @synchronized (self)
@@ -209,13 +288,29 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
             [self didChangeValueForKey:@"actionHandler"];
         }
 
+        if (_target && _actionHandlerKeyUp)
+        {
+            [self willChangeValueForKey:@"actionHandlerKeyUp"];
+            _actionHandlerKeyUp = nil;
+            [self didChangeValueForKey:@"actionHandlerKeyUp"];
+        }
+
         [self didChangeValueForKey:@"target"];
     }
 }
 
 #pragma mark Methods
-
 - (BOOL)performActionOnTarget:(id)aTarget
+{
+    return [self _performActionOnTarget:aTarget isForKeyUp:NO];
+}
+
+- (BOOL)performActionKeyUpOnTarget:(id)aTarget
+{
+    return [self _performActionOnTarget:aTarget isForKeyUp:YES];
+}
+
+- (BOOL)_performActionOnTarget:(id)aTarget isForKeyUp:(BOOL)isForKeyUp
 {
     __block BOOL isPerformed = NO;
     os_activity_initiate("Performing shortcut action", OS_ACTIVITY_FLAG_DEFAULT, ^{
@@ -225,7 +320,7 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
             return;
         }
 
-        SRShortcutActionHandler actionHandler = self.actionHandler;
+        SRShortcutActionHandler actionHandler = isForKeyUp ? self.actionHandlerKeyUp : self.actionHandler;
 
         if (actionHandler)
         {
@@ -241,11 +336,12 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
                 return;
             }
 
-            SEL action = self.action;
+            SEL action = isForKeyUp ? self.actionKeyUp : self.action;
+            SEL performShortcutAction = isForKeyUp ? @selector(performShortcutActionKeyUp:) : @selector(performShortcutAction:);
             
             BOOL canPerformAction = NO;
             BOOL canPerformProtocol = NO;
-            if (!(canPerformAction = action && [target respondsToSelector:action]) && !(canPerformProtocol = [target respondsToSelector:@selector(performShortcutAction:)]))
+            if (!(canPerformAction = action && [target respondsToSelector:action]) && !(canPerformProtocol = [target respondsToSelector:performShortcutAction]))
             {
                 os_trace_debug("Not performed: target cannot respond to action");
                 return;
@@ -293,7 +389,14 @@ static void *_SRShortcutActionContext = &_SRShortcutActionContext;
             else if (canPerformProtocol)
             {
                 os_trace_debug("Using protocol");
-                isPerformed = [(id<SRShortcutActionTarget>)target performShortcutAction:self];
+                if (isForKeyUp)
+                {
+                    isPerformed = [(id<SRShortcutActionTarget>)target performShortcutActionKeyUp:self];
+                }
+                else
+                {
+                    isPerformed = [(id<SRShortcutActionTarget>)target performShortcutAction:self];
+                }
             }
         }
     });
@@ -679,9 +782,18 @@ static OSStatus SRCarbonEventHandler(EventHandlerCallRef aHandler, EventRef anEv
                 return;
             }
 
+            UInt32 eventKind = GetEventKind(anEvent);
+
             dispatch_async(self.dispatchQueue, dispatch_block_create(DISPATCH_BLOCK_NO_QOS_CLASS, ^{
                 [actions enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(SRShortcutAction *obj, NSUInteger idx, BOOL *stop) {
-                    *stop = [obj performActionOnTarget:nil];
+                    switch (eventKind) {
+                        case kEventHotKeyReleased:
+                            *stop = [obj performActionKeyUpOnTarget:nil];
+                            break;
+                        default:
+                            *stop = [obj performActionOnTarget:nil];
+                            break;
+                    }
                 }];
             }));
         }
@@ -697,7 +809,10 @@ static OSStatus SRCarbonEventHandler(EventHandlerCallRef aHandler, EventRef anEv
     if (_carbonEventHandler)
         return;
 
-    static const EventTypeSpec eventSpec[] = { { kEventClassKeyboard, kEventHotKeyPressed } };
+    static const EventTypeSpec eventSpec[] = {
+        { kEventClassKeyboard, kEventHotKeyPressed },
+        { kEventClassKeyboard, kEventHotKeyReleased }
+    };
     os_trace("Installing Carbon hot key event handler");
     OSStatus error = InstallEventHandler(GetEventDispatcherTarget(),
                                          (EventHandlerProcPtr)SRCarbonEventHandler,

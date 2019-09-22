@@ -62,10 +62,26 @@ NS_SWIFT_NAME(ShortcutAction)
                                        tag:(NSInteger)aTag;
 
 /*!
+ Instantiate a selector-based action bound to the shortcut.
+ */
++ (instancetype)shortcutActionWithShortcut:(SRShortcut *)aShortcut
+                                    target:(nullable id)aTarget
+                                    action:(nullable SEL)anAction
+                               actionKeyUp:(nullable SEL)anActionKeyUp
+                                       tag:(NSInteger)aTag;
+
+/*!
  Instantiate a block-based action bound to the shortcut.
  */
 + (instancetype)shortcutActionWithShortcut:(SRShortcut *)aShortcut
                              actionHandler:(SRShortcutActionHandler)anActionHandler;
+
+/*!
+ Instantiate a block-based action bound to the shortcut that handles the keyDown and keyUp events separately
+ */
++ (instancetype)shortcutActionWithShortcut:(SRShortcut *)aShortcut
+                             actionHandler:(SRShortcutActionHandler)anActionHandler
+                        actionHandlerKeyUp:(SRShortcutActionHandler)anActionHandlerKeyUp;
 
 /*!
  Instantiate a selector-based action bound to the autoupdating shortcut.
@@ -77,11 +93,29 @@ NS_SWIFT_NAME(ShortcutAction)
                                       tag:(NSInteger)aTag;
 
 /*!
+ Instantiate a selector-based action bound to the autoupdating shortcut.
+ */
++ (instancetype)shortcutActionWithKeyPath:(NSString *)aKeyPath
+                                 ofObject:(id)anObject
+                                   target:(nullable id)aTarget
+                                   action:(nullable SEL)anAction
+                              actionKeyUp:(nullable SEL)anActionKeyUp
+                                      tag:(NSInteger)aTag;
+
+/*!
  Instantiate a block-based action bound to the autoupdating shortcut.
  */
 + (instancetype)shortcutActionWithKeyPath:(NSString *)aKeyPath
                                  ofObject:(id)anObject
                             actionHandler:(SRShortcutActionHandler)anActionHandler;
+
+/*!
+ Instantiate a block-based action bound to the autoupdating shortcut.
+ */
++ (instancetype)shortcutActionWithKeyPath:(NSString *)aKeyPath
+                                 ofObject:(id)anObject
+                            actionHandler:(SRShortcutActionHandler)anActionHandler
+                       actionHandlerKeyUp:(SRShortcutActionHandler)anActionHandlerKeyUp;
 
 /*!
  The shortcut associated with the action.
@@ -121,11 +155,26 @@ NS_SWIFT_NAME(ShortcutAction)
 @property (nullable) SEL action;
 
 /*!
+ The selector associated with the keyUp action.
+
+ @discussion
+ May be nil if the target conforms to the SRShortcutActionTarget protocol.
+ */
+@property (nullable) SEL actionKeyUp;
+
+/*!
  The handler to execute when the action is performed.
 
  @note Setting the handler resets the target.
  */
 @property (nullable) SRShortcutActionHandler actionHandler;
+
+/*!
+ The handler to execute when the action is released.
+
+ @note Setting the handler resets the target.
+ */
+@property (nullable) SRShortcutActionHandler actionHandlerKeyUp;
 
 /*!
  The tag identifying the receiver.
@@ -168,6 +217,23 @@ NS_SWIFT_NAME(ShortcutAction)
  */
 - (BOOL)performActionOnTarget:(nullable id)aTarget;
 
+/*!
+Perform the associated actionKeyUp, if any, on the given target, if possible.
+
+@param aTarget Target to perform the associated action. If nil, defaults to action's target.
+
+@discussion
+Disabled actions return NO immediately.
+
+If there is an associated action handler, it is performed and aTarget is ignored.
+Otherwise, the associated action is performed if:
+1. aTarget either implements the action or adopts the SRShortcutActionTarget protocol
+2. aTarget's -validateUserInterfaceItem:, if implemented, returns YES
+
+@return YES if the action was performed; NO otherwise.
+*/
+- (BOOL)performActionKeyUpOnTarget:(nullable id)aTarget;
+
 @end
 
 
@@ -180,6 +246,8 @@ NS_SWIFT_NAME(ShortcutAction)
  */
 @protocol SRShortcutActionTarget
 - (BOOL)performShortcutAction:(SRShortcutAction *)anAction NS_SWIFT_NAME(perform(shortcutAction:));
+@optional
+- (BOOL)performShortcutActionKeyUp:(SRShortcutAction *)anAction NS_SWIFT_NAME(perform(shortcutActionKeyUp:));
 @end
 
 
