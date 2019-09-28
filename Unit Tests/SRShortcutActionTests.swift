@@ -262,13 +262,11 @@ class SRShortcutActionTests: XCTestCase {
 
     func testPerformActionKeyUpHandler() {
         let expectation = self.expectation(description: "action handler")
-        let action = ShortcutAction(shortcut: Shortcut.default, actionHandler: { _ in
-            return true
-        }) { action in
+        let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased) { _ in
             expectation.fulfill()
             return true
         }
-        action.performKeyUp(onTarget: nil)
+        action.perform(onTarget: nil)
         wait(for: [expectation], timeout: 0)
     }
 
@@ -294,16 +292,16 @@ class SRShortcutActionTests: XCTestCase {
         XCTContext.runActivity(named: "action's target") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: target, action: #selector(Target.action(_:)), actionKeyUp: #selector(Target.actionKeyUp(_:)), tag: 0)
-            action.performKeyUp(onTarget: nil)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: target, action: #selector(Target.action(_:)), tag: 0)
+            action.perform(onTarget: nil)
             wait(for: [target.expectation], timeout: 0)
         }
 
         XCTContext.runActivity(named: "custom target") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: nil, action: #selector(Target.action(_:)), actionKeyUp: #selector(Target.actionKeyUp(_:)), tag: 0)
-            action.performKeyUp(onTarget: target)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: nil, action: #selector(Target.action(_:)), tag: 0)
+            action.perform(onTarget: target)
             wait(for: [target.expectation], timeout: 0)
         }
     }
@@ -330,16 +328,16 @@ class SRShortcutActionTests: XCTestCase {
         XCTContext.runActivity(named: "action's target") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: target, action: #selector(Target.anotherAction), actionKeyUp: #selector(Target.anotherActionKeyUp), tag: 0)
-            action.performKeyUp(onTarget: nil)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: target, action: #selector(Target.anotherAction), tag: 0)
+            action.perform(onTarget: nil)
             wait(for: [target.expectation], timeout: 0)
         }
 
         XCTContext.runActivity(named: "custom target") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: nil, action: #selector(Target.anotherAction), actionKeyUp: #selector(Target.anotherActionKeyUp), tag: 0)
-            action.performKeyUp(onTarget: target)
+            let action = ShortcutAction(shortcut: Shortcut.default, target: nil, action: #selector(Target.anotherAction), tag: 0)
+            action.perform(onTarget: target)
             wait(for: [target.expectation], timeout: 0)
         }
     }
@@ -356,8 +354,8 @@ class SRShortcutActionTests: XCTestCase {
         XCTContext.runActivity(named: "action's target (keyUp)") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: target, action: nil, tag: 0)
-            action.performKeyUp(onTarget: nil)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: target, action: nil, tag: 0)
+            action.perform(onTarget: nil)
             wait(for: [target.expectation], timeout: 0)
         }
 
@@ -372,8 +370,8 @@ class SRShortcutActionTests: XCTestCase {
         XCTContext.runActivity(named: "custom target (keyUp)") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: nil, action: nil, tag: 0)
-            action.performKeyUp(onTarget: target)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: nil, action: nil, tag: 0)
+            action.perform(onTarget: target)
             wait(for: [target.expectation], timeout: 0)
         }
     }
@@ -390,8 +388,8 @@ class SRShortcutActionTests: XCTestCase {
         XCTContext.runActivity(named: "action's target (keyUp)") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: target, action: Selector("someAction:"), actionKeyUp: Selector("someAction:"), tag: 0)
-            action.performKeyUp(onTarget: nil)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: target, action: Selector("someAction:"), tag: 0)
+            action.perform(onTarget: nil)
             wait(for: [target.expectation], timeout: 0)
         }
 
@@ -406,8 +404,8 @@ class SRShortcutActionTests: XCTestCase {
         XCTContext.runActivity(named: "custom target (keyUp)") { _ in
             let target = Target()
             target.expectation.assertForOverFulfill = true
-            let action = ShortcutAction(shortcut: Shortcut.default, target: nil, action: Selector("someAction:"), actionKeyUp: Selector("someAction:"), tag: 0)
-            action.performKeyUp(onTarget: target)
+            let action = ShortcutAction(shortcut: Shortcut.default, forKeyEvent: kEventHotKeyReleased, target: nil, action: Selector("someAction:"), tag: 0)
+            action.perform(onTarget: target)
             wait(for: [target.expectation], timeout: 0)
         }
     }
