@@ -248,6 +248,12 @@ NS_SWIFT_NAME(ShortcutMonitor)
 - (nullable SRShortcutAction *)actionForShortcut:(SRShortcut *)aShortcut;
 
 /*!
+ The most recent action associated with the shortcut for a specific key event.
+ Valid key events are `kEventHotKeyPressed` and `kEventHotKeyReleased`
+ */
+- (nullable SRShortcutAction *)actionForShortcut:(SRShortcut *)aShortcut forKeyEvent:(NSInteger)aKeyEvent;
+
+/*!
  All actions associated with the shortcut.
 
  @return

@@ -480,6 +480,24 @@ static void *_SRShortcutMonitorContext = &_SRShortcutMonitorContext;
     }
 }
 
+- (SRShortcutAction *)actionForShortcut:(SRShortcut *)aShortcut forKeyEvent:(NSInteger)aKeyEvent
+{
+    @synchronized (_shortcutToActions)
+    {
+        @synchronized (_shortcutActions)
+        {
+            NSArray<SRShortcutAction *> *actionsForShortcut = [_shortcutToActions objectForKey:aShortcut];
+            NSHashTable<SRShortcutAction *> *actions = _shortcutActions[@(aKeyEvent)];
+            for (SRShortcutAction *action in actionsForShortcut.reverseObjectEnumerator) {
+                if ([actions containsObject:action]) {
+                    return action;
+                }
+            }
+            return nil;
+        }
+    }
+}
+
 - (NSArray<SRShortcutAction *> *)allActionsForShortcut:(SRShortcut *)aShortcut
 {
     @synchronized (_shortcutToActions)

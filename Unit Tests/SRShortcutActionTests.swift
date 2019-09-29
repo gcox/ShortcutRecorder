@@ -388,6 +388,26 @@ class SRShortcutMonitorTests: XCTestCase {
         XCTAssertEqual(monitor.allActions(for: Shortcut.default), [action1, action2])
     }
 
+    func testMultipleActionsForShortcutByKeyEvent() {
+        let action1 = ShortcutAction(shortcut: Shortcut.default) {_ in true}
+        let action2 = ShortcutAction(shortcut: Shortcut.default) {_ in true}
+        let action3 = ShortcutAction(shortcut: Shortcut.default) {_ in true}
+        let action4 = ShortcutAction(shortcut: Shortcut.default) {_ in true}
+        let monitor = ShortcutMonitor()
+        monitor.addShortcutAction(action1, forKeyEvent: kEventHotKeyPressed)
+        monitor.addShortcutAction(action2, forKeyEvent: kEventHotKeyPressed)
+        monitor.addShortcutAction(action3, forKeyEvent: kEventHotKeyReleased)
+        monitor.addShortcutAction(action4, forKeyEvent: kEventHotKeyReleased)
+        XCTAssertEqual(Set(monitor.shortcutActions), Set([action1, action2, action3, action4]))
+        XCTAssertEqual(monitor.action(for: Shortcut.default)!, action4)
+        XCTAssertEqual(monitor.action(for: Shortcut.default, forKeyEvent: kEventHotKeyPressed), action2);
+        XCTAssertEqual(monitor.action(for: Shortcut.default, forKeyEvent: kEventHotKeyReleased), action4);
+        XCTAssertEqual(monitor.allActions(for: Shortcut.default), [action1, action2, action3, action4])
+        XCTAssertEqual(monitor.allActions(for: Shortcut.default, forKeyEvent: kEventHotKeyPressed), [action1, action2])
+        XCTAssertEqual(monitor.allActions(for: Shortcut.default, forKeyEvent: kEventHotKeyReleased), [action3, action4])
+
+    }
+
     func testActionShortcutObservation() {
         let shortcut1 = Shortcut(keyEquivalent: "⌘A")!
         let shortcut2 = Shortcut(keyEquivalent: "⌘B")!
